@@ -1,4 +1,4 @@
-.PHONY: prebuild clean cleanall ci server server-mac server-linux server-win server-linux-package generate watch-server webapp mac-app win-app-wpf linux-app
+.PHONY: prebuild clean cleanall ci server server-mac server-linux server-linux-arm64 server-win server-linux-package generate watch-server webapp mac-app win-app-wpf linux-app
 
 PACKAGE_FOLDER = focalboard
 
@@ -69,6 +69,11 @@ server-linux:
 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
 	cd server; env GOOS=linux GOARCH=amd64 go build -ldflags '$(LDFLAGS)' -o ../bin/linux/focalboard-server ./main
 
+server-linux-arm64:
+	mkdir -p bin/linux
+	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
+	cd server; env GOOS=linux GOARCH=arm64 go build -ldflags '$(LDFLAGS)' -o ../bin/linux-arm64/focalboard-server ./main
+
 server-win:
 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=win")
 	cd server; env GOOS=windows GOARCH=amd64 go build -ldflags '$(LDFLAGS)' -o ../bin/win/focalboard-server.exe ./main
@@ -88,6 +93,19 @@ server-linux-package: server-linux webapp
 	cp webapp/NOTICE.txt package/${PACKAGE_FOLDER}/webapp-NOTICE.txt
 	mkdir -p dist
 	cd package && tar -czvf ../dist/focalboard-server-linux-amd64.tar.gz ${PACKAGE_FOLDER}
+	rm -rf package
+
+server-linux-arm64-package: server-linux-arm64 webapp
+	rm -rf package
+	mkdir -p package/${PACKAGE_FOLDER}/bin
+	cp bin/linux-arm64/focalboard-server package/${PACKAGE_FOLDER}/bin
+	cp -R webapp/pack package/${PACKAGE_FOLDER}/pack
+	cp server-config.json package/${PACKAGE_FOLDER}/config.json
+	cp build/MIT-COMPILED-LICENSE.md package/${PACKAGE_FOLDER}
+	cp NOTICE.txt package/${PACKAGE_FOLDER}
+	cp webapp/NOTICE.txt package/${PACKAGE_FOLDER}/webapp-NOTICE.txt
+	mkdir -p dist
+	cd package && tar -czvf ../dist/focalboard-server-linux-arm64.tar.gz ${PACKAGE_FOLDER}
 	rm -rf package
 
 server-enterprise-linux-package: server-linux webapp
